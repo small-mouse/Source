@@ -83,7 +83,7 @@ android的UI是线程不安全的，如果试图在子现场中访问UI,呵呵�
 Looper.prepare(),等下我们在瞧瞧注释说的是不是真的。（你丫见过注释是假的吗？）
   
 我们继续看看ThreadLocal究竟是什么东西来的（用我烂的英语水平来看就是本地线程，是个线程对吧，啊哈哈）
-    ```java
+```java
     /**
  * Implements a thread-local storage, that is, a variable for which each thread
  * has its own value. All threads share the same {@code ThreadLocal} object,
