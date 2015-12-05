@@ -73,16 +73,16 @@ android的UI是线程不安全的，如果试图在子现场中访问UI,呵呵�
         return sThreadLocal.get();
     }
   ```
+  
   从源码可以看出sThreadLocal.get()返回一个Looper对象，那sThreadLocal又是什么东西来的，别急，小七我也不知道，我们去看它的声明
   ```java
-  
     // sThreadLocal.get() will return null unless you've called prepare().
     static final ThreadLocal<Looper> sThreadLocal = new ThreadLocal<Looper>();
-    ```
-    卧槽，那个写注释的也太好人了 sThreadLocal.get() will return null unless you've called prepare().，Looper的对象为null是因为没有调用
-    Looper.prepare(),等下我们在瞧瞧注释说的是不是真的。（你丫见过注释是假的吗？）
-    
-    我们继续看看ThreadLocal究竟是什么东西来的（用我烂的英语水平来看就是本地线程，是个线程对吧，啊哈哈）
+ ```
+卧槽，那个写注释的也太好人了 sThreadLocal.get() will return null unless you've called prepare().，Looper的对象为null是因为没有调用
+Looper.prepare(),等下我们在瞧瞧注释说的是不是真的。（你丫见过注释是假的吗？）
+  
+我们继续看看ThreadLocal究竟是什么东西来的（用我烂的英语水平来看就是本地线程，是个线程对吧，啊哈哈）
     ```java
     /**
  * Implements a thread-local storage, that is, a variable for which each thread
@@ -95,6 +95,7 @@ android的UI是线程不安全的，如果试图在子现场中访问UI,呵呵�
  * @author Bob Lee
  */
 public class ThreadLocal<T> {
+
 ```
 这是个泛型类，作者Bob Lee 的注释中说 实现一个线程本地的存储，每个线程中的变量有它自己的值，所有的线程共享相同的ThreadLocal对象，但是
 每看到一个不同的值去访问它,更改的线程不会影响其他线程。（对，我翻译的就是这样了，bob lee 如果误解了你的意思，我只能说抱歉，啊哈哈）
