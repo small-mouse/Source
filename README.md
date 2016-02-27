@@ -22,9 +22,11 @@ source
         });
 ```
 BottomSheetBehavior的定义如下
+
     ```java
     public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> 
     ```
+    
 继承自CoordinatorLayout.Behavior，BottomSheetBehavior.from(V view)方法获得了BootomSheetBehavior的实例，我们进去看看它怎么实现的。
 
 ```java
@@ -42,7 +44,59 @@ BottomSheetBehavior的定义如下
         return (BottomSheetBehavior<V>) behavior;
     }
     ```
-    我们
+源码中看出根据传入的参数view的LayoutParams是不是 CoordinatorLayout.LayoutParams，若不是，将抛出"The view is not a child of CoordinatorLayout"的异常，通过 ((CoordinatorLayout.LayoutParams) params).getBehavior()获得一个behavior并判断是不是BottomSheetBehavior，若不是，就抛出异常"The view is not associated with BottomSheetBehavior",都符合就返回了BottomSheetBehavior的实例。这里我们可以知道behavior保存在 CoordinatorLayout.LayoutParams里，那它是
+怎么保存的呢，怀着好奇心，我们去看看CoordinatorLayout.LayoutParams中的源码，在LayoutParams的构造函数中，有这么一句：
+
+```java
+            if (mBehaviorResolved) {
+                mBehavior = parseBehavior(context, attrs, a.getString(
+                        R.styleable.CoordinatorLayout_LayoutParams_layout_behavior));
+            }
+```
+顺藤摸瓜，我们在跟进去看看parseBehavior做了什么
+
+```java
+
+     static final Class<?>[] CONSTRUCTOR_PARAMS = new Class<?>[] {
+        Context.class,
+        AttributeSet.class
+    };
+
+    static Behavior parseBehavior(Context context, AttributeSet attrs, String name) {
+       /*
+        *省略部分代码
+        */
+        try {
+           /*
+            *省略部分代码
+            */
+            Constructor<Behavior> c = constructors.get(fullName);
+            if (c == null) {
+                final Class<Behavior> clazz = (Class<Behavior>) Class.forName(fullName, true,
+                        context.getClassLoader());
+                c = clazz.getConstructor(CONSTRUCTOR_PARAMS);
+                c.setAccessible(true);
+                constructors.put(fullName, c);
+            }
+            return c.newInstance(context, attrs);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not inflate Behavior subclass " + fullName, e);
+        }
+    }
+```
+这里做的事情很简单，就是在实例化CoordinatorLayout.LayoutParams时反射生成Behavior实例，这就是为什么自定义behavior需要重写如下的构造函数
+```java
+    public class CjjBehavior extends CoordinatorLayout.Behavior{
+        public CjjBehavior(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+    }
+```
+不然就会看到"Could not inflate Behavior subclass ..."异常 。
+
+目前为止，我们只是了解了CoordinatorLayout.Behavior相关的东西，还是不知道BottomSheetBehavior实现的原理，别急，这就和你说说。
+
+
     
 
 
