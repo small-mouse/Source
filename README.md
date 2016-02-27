@@ -2,9 +2,7 @@
 source  
 
 2.25号早上，Android官网更新了Support Lirary 23.2版本，其中Design Support Library库新加一个新的东西：Bottom Sheets。然后，第一时间写了篇Teach you how to use Design Support Library: Bottom Sheets，只是简单的讲了它的使用和使用的一些规范。
-今天我带大家撸撸BottomSheetBehavior
-
-源码，能力有限，写的不好的地方，请尽力吐槽。好了，不说废话，直接主题
+今天我带大家撸撸BottomSheetBehavior的源码，能力有限，写的不好的地方，请尽力吐槽。好了，不说废话，直接主题
 
 我们还是先简单的看下用法
 ```java
@@ -23,13 +21,12 @@ source
             }
         });
 ```
-
-
-    BottomSheetBehavior的定义如下
+BottomSheetBehavior的定义如下
     ```java
     public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> 
     ```
-    继承自CoordinatorLayout.Behavior，BottomSheetBehavior.from(V view)方法获得了BootomSheetBehavior的实例，我们进去看看它怎么实现的。
+继承自CoordinatorLayout.Behavior，BottomSheetBehavior.from(V view)方法获得了BootomSheetBehavior的实例，我们进去看看它怎么实现的。
+
 ```java
     public static <V extends View> BottomSheetBehavior<V> from(V view) {
         ViewGroup.LayoutParams params = view.getLayoutParams();
@@ -45,6 +42,7 @@ source
         return (BottomSheetBehavior<V>) behavior;
     }
     ```
+    我们
     
 
 
