@@ -1,6 +1,89 @@
 # ALL_I_KNOW
 source  
 
+2.25号早上，Android官网更新了Support Lirary 23.2版本，其中Design Support Library库新加一个新的东西：Bottom Sheets。然后，第一时间写了篇Teach you how to use Design Support Library: Bottom Sheets，只是简单的讲了它的使用和使用的一些规范。
+今天我带大家撸撸BottomSheetBehavior
+
+源码，能力有限，写的不好的地方，请尽力吐槽。好了，不说废话，直接主题
+
+我们还是先简单的看下用法
+```java
+        // The View with the BottomSheetBehavior
+        View bottomSheet = coordinatorLayout.findViewById(R.id.bottom_sheet);
+        final BottomSheetBehavior behavior = BottomSheetBehavior.from(bottomSheet);
+        behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                //这里是bottomSheet 状态的改变，根据slideOffset可以做一些动画
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                //这里是拖拽中的回调，根据slideOffset可以做一些动画
+            }
+        });
+```
+
+
+    BottomSheetBehavior的定义如下
+    ```java
+    public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> 
+    ```
+    继承自CoordinatorLayout.Behavior，BottomSheetBehavior.from(V view)方法获得了BootomSheetBehavior的实例，我们进去看看它怎么实现的。
+```java
+    public static <V extends View> BottomSheetBehavior<V> from(V view) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (!(params instanceof CoordinatorLayout.LayoutParams)) {
+            throw new IllegalArgumentException("The view is not a child of CoordinatorLayout");
+        }
+        CoordinatorLayout.Behavior behavior = ((CoordinatorLayout.LayoutParams) params)
+                .getBehavior();
+        if (!(behavior instanceof BottomSheetBehavior)) {
+            throw new IllegalArgumentException(
+                    "The view is not associated with BottomSheetBehavior");
+        }
+        return (BottomSheetBehavior<V>) behavior;
+    }
+    ```
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 小七所理解的android消息机制
 ==================================================
 
