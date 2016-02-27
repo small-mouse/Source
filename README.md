@@ -13,7 +13,7 @@ source
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                //这里是bottomSheet 状态的改变，根据slideOffset可以做一些动画
+                //这里是bottomSheet 状态的改变回调
             }
 
             @Override
@@ -129,10 +129,12 @@ CoordinatorLayout 在 onLayout 的时候会调用BottomSheetBehavior.onLayoutChi
 这里主要做了 调用父类 对 View 进行布局,根据 mPeekHeight 和 mState 对 View 位置的进行偏移,偏移到合适的位置,因为mState 默认为STATE_COLLAPSED,偏移量为mParentHeight - mPeekHeight, 调用了findScrollingChild () 寻找第一个 NestedScrollingChild 组件。
 并且初始化了ViewDragHelper 类.负责 View 的滑动。
 
-这里说说BottomSheetBehavior的一个坑，mPeekHeight的默认值是0，或者我们在代码中设置mPeekHeight的高度为0时，自己测试了下，在android5.0的机子底部的BottomSheetBehavior 视图滑动不出来，4.0的又是正常的，你可以亲自试试，体会下......
+吐槽下BottomSheetBehavior的一个坑，mPeekHeight的默认值是0，或者我们在代码中设置mPeekHeight的高度为0时，mMaxOffset=mParentHeight，  ViewCompat.offsetTopAndBottom(child, mMaxOffset)刚好看不到BottomSheetBehavior 视图，自己测试了下，
+在android5.0的机子底部的BottomSheetBehavior 视图滑动不出来，4.0的又是正常的，你可以亲自试试，体会下......
+
 我的好基友dim给出了解决方案[Android support 23.2 使用BottomSheetBehavior 的坑](http://www.jianshu.com/p/21bb14e3be94)
 
-在说说一个小技巧，Android官网中有这样一句话：[Enums often require more than twice as much memory as static constants. You should strictly avoid using enums on Android](http://developer.android.com/intl/zh-cn/training/articles/memory.html),就是说枚举比静态常量更加耗费内存，我们应该避免使用，然后我看BottomSheetBehavior源码中mState 是这样定义的：
+在说说一个小技巧，Android官网中有这样一句话：[Enums often require more than twice as much memory as static constants. You should strictly avoid using enums on Android](http://developer.android.com/intl/zh-cn/training/articles/memory.html),就是说枚举比静态常量更加耗费内存，我们应该避免使用，然后我看BottomSheetBehavior源码中 mState 是这样定义的：
 ```java
     public static final int STATE_DRAGGING = 1;
     public static final int STATE_SETTLING = 2;
@@ -151,6 +153,150 @@ CoordinatorLayout 在 onLayout 的时候会调用BottomSheetBehavior.onLayoutChi
 弥补了Android不建议使用枚举的缺陷。
 
 ###事件拦截
+在CoordinatorLayout的onInterceptTouchEvent()方法和onTouchEvent()方法中会回调给BottomSheetBehavior的onInterceptTouchEvent、onTouchEvent
+```java
+if (!intercepted && b != null) {
+    switch (type) {
+        case TYPE_ON_INTERCEPT:
+            intercepted = b.onInterceptTouchEvent(this, child, ev);
+            break;
+        case TYPE_ON_TOUCH:
+            intercepted = b.onTouchEvent(this, child, ev);
+            break;
+    }
+    if (intercepted) {
+        mBehaviorTouchView = child;
+    }
+}
+```
+我们看看BottomSheetBehavior是怎样处理事件的
+```java
+ @Override
+    public boolean onInterceptTouchEvent(CoordinatorLayout parent, V child, MotionEvent event) {
+     
+        /*
+        * 省略部分代码
+        */
+        //拦截条件是touch 点击的位置是该 View 的范围内,并且是 MotionEvent.ACTION_MOVE 操作时候拦截,移动交给mViewDragHelper
+        if (!mIgnoreEvents && mViewDragHelper.shouldInterceptTouchEvent(event)) {
+            return true;
+        }
+        
+        View scroll = mNestedScrollingChildRef.get();
+        return action == MotionEvent.ACTION_MOVE && scroll != null &&
+                !mIgnoreEvents && mState != STATE_DRAGGING &&
+                !parent.isPointInChildBounds(scroll, (int) event.getX(), (int) event.getY()) &&
+                Math.abs(mInitialY - event.getY()) > mViewDragHelper.getTouchSlop();
+    }
+
+    @Override
+    public boolean onTouchEvent(CoordinatorLayout parent, V child, MotionEvent event) {
+        if (!child.isShown()) {
+            return false;
+        }
+        int action = MotionEventCompat.getActionMasked(event);
+        if (mState == STATE_DRAGGING && action == MotionEvent.ACTION_DOWN) {
+            return true;
+        }
+        mViewDragHelper.processTouchEvent(event);
+        // Record the velocity
+        if (action == MotionEvent.ACTION_DOWN) {
+            reset();
+        }
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        }
+        mVelocityTracker.addMovement(event);
+        // The ViewDragHelper tries to capture only the top-most View. We have to explicitly tell it
+        // to capture the bottom sheet in case it is not captured and the touch slop is passed.
+        if (action == MotionEvent.ACTION_MOVE) {
+            if (Math.abs(mInitialY - event.getY()) > mViewDragHelper.getTouchSlop()) {
+                mViewDragHelper.captureChildView(child, event.getPointerId(event.getActionIndex()));
+            }
+        }
+        return true;
+    }
+```
+
+### NestedScrolling事件处理
+当 View 的子控件有 NestedScrollingChild 产生 Nested 事件的时候.会调用onStartNestedScroll 这个方法
+```java
+    @Override
+    public boolean onStartNestedScroll(CoordinatorLayout coordinatorLayout, V child,
+            View directTargetChild, View target, int nestedScrollAxes) {
+            return (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;//滑动Y轴方向的判断
+    }
+```
+返回 true 表示 View 要和NestedScrollingChild 配合消耗这个 Nested 事件,进入onNestedPreScroll()方法
+```java
+  @Override
+    public void onNestedPreScroll(CoordinatorLayout coordinatorLayout, V child, View target, int dx,
+            int dy, int[] consumed) {
+        View scrollingChild = mNestedScrollingChildRef.get();
+        if (target != scrollingChild) {
+            return;
+        }
+        int currentTop = child.getTop();
+        int newTop = currentTop - dy;
+        if (dy > 0) { // Upward
+            if (newTop < mMinOffset) {
+                consumed[1] = currentTop - mMinOffset;
+                ViewCompat.offsetTopAndBottom(child, -consumed[1]);
+                setStateInternal(STATE_EXPANDED);
+            } else {
+                consumed[1] = dy;
+                ViewCompat.offsetTopAndBottom(child, -dy);
+                setStateInternal(STATE_DRAGGING);
+            }
+        } else if (dy < 0) { // Downward
+            if (!ViewCompat.canScrollVertically(target, -1)) {
+                if (newTop <= mMaxOffset || mHideable) {
+                    consumed[1] = dy;
+                    ViewCompat.offsetTopAndBottom(child, -dy);
+                    setStateInternal(STATE_DRAGGING);
+                } else {
+                    consumed[1] = currentTop - mMaxOffset;
+                    ViewCompat.offsetTopAndBottom(child, -consumed[1]);
+                    setStateInternal(STATE_COLLAPSED);
+                }
+            }
+        }
+        dispatchOnSlide(child.getTop());
+        mLastNestedScrollDy = dy;
+        mNestedScrolled = true;
+    }
+
+```
+这里是说 发起的 Nested 事件的不是onLayoutChild获取到的 View 一致的话.不消耗 y 轴
+当一致的的时候消耗相对应的 y 轴,本来 nestedChild 想滑动20像素, 你消耗了10 那么nestedChild就只能滑动10像素.
+消耗 y 轴,使用ViewCompat.offsetTopAndBottom(child, -consumed[1]); 这样就感觉滑动事View 被滑动了
+这个方法也是ViewDragHelper实现滑动的方法.
+
+```java
+ @Override
+    public boolean onStartNestedScroll(CoordinatorLayout coordinatorLayout, V child,
+            View directTargetChild, View target, int nestedScrollAxes) {
+   
+    }
+
+    @Override
+    public void onNestedPreScroll(CoordinatorLayout coordinatorLayout, V child, View target, int dx,
+            int dy, int[] consumed) {
+       
+    }
+
+    @Override
+    public void onStopNestedScroll(CoordinatorLayout coordinatorLayout, V child, View target) {
+
+    }
+
+    @Override
+    public boolean onNestedPreFling(CoordinatorLayout coordinatorLayout, V child, View target,
+            float velocityX, float velocityY) {
+
+    }
+```
+
 
 
 
