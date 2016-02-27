@@ -267,24 +267,11 @@ if (!intercepted && b != null) {
     }
 
 ```
-这里是说 发起的 Nested 事件的不是onLayoutChild获取到的 View 一致的话.不消耗 y 轴
-当一致的的时候消耗相对应的 y 轴,本来 nestedChild 想滑动20像素, 你消耗了10 那么nestedChild就只能滑动10像素.
-消耗 y 轴,使用ViewCompat.offsetTopAndBottom(child, -consumed[1]); 这样就感觉滑动事View 被滑动了
-这个方法也是ViewDragHelper实现滑动的方法.
+上面的方法主要是计算NestedScrollingChild能滑动的值，通过使用ViewCompat.offsetTopAndBottom(child, -consumed[1]);其中comsume[]是个数组，,consumed[1]表示 Parent 在 Y 轴消耗的值, 所以 Child 滑动距离是请求Y轴的滑动距离减少consumed[1],consumed[0]表示 X轴上面的消耗.
+通过 setStateInternal()方法设置状态回调
 
+以下两个方法，顾名思义是Nested事件停止和Fling事件的回调，这里就多说了，具体可以看看源码。
 ```java
- @Override
-    public boolean onStartNestedScroll(CoordinatorLayout coordinatorLayout, V child,
-            View directTargetChild, View target, int nestedScrollAxes) {
-   
-    }
-
-    @Override
-    public void onNestedPreScroll(CoordinatorLayout coordinatorLayout, V child, View target, int dx,
-            int dy, int[] consumed) {
-       
-    }
-
     @Override
     public void onStopNestedScroll(CoordinatorLayout coordinatorLayout, V child, View target) {
 
@@ -296,6 +283,13 @@ if (!intercepted && b != null) {
 
     }
 ```
+
+其实是我想出去外面玩玩了，毕竟大好周末啊！
+
+Have a nice weekend ! Bye bye.
+
+
+
 
 
 
