@@ -23,9 +23,9 @@ source
 ```
 BottomSheetBehavior的定义如下
 
-    ```java
+```java
     public class BottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> 
-    ```
+```
     
 继承自CoordinatorLayout.Behavior，BottomSheetBehavior.from(V view)方法获得了BootomSheetBehavior的实例，我们进去看看它怎么实现的。
 
@@ -43,7 +43,7 @@ BottomSheetBehavior的定义如下
         }
         return (BottomSheetBehavior<V>) behavior;
     }
-    ```
+```
 源码中看出根据传入的参数view的LayoutParams是不是 CoordinatorLayout.LayoutParams，若不是，将抛出"The view is not a child of CoordinatorLayout"的异常，通过 ((CoordinatorLayout.LayoutParams) params).getBehavior()获得一个behavior并判断是不是BottomSheetBehavior，若不是，就抛出异常"The view is not associated with BottomSheetBehavior",都符合就返回了BottomSheetBehavior的实例。这里我们可以知道behavior保存在 CoordinatorLayout.LayoutParams里，那它是
 怎么保存的呢，怀着好奇心，我们去看看CoordinatorLayout.LayoutParams中的源码，在LayoutParams的构造函数中，有这么一句：
 
