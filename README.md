@@ -1,10 +1,11 @@
 # ALL_I_KNOW
 source  
 
-2.25号早上，Android官网更新了Support Lirary 23.2版本，其中Design Support Library库新加一个新的东西：Bottom Sheets。然后，第一时间写了篇Teach you how to use Design Support Library: Bottom Sheets，只是简单的讲了它的使用和使用的一些规范。
-今天我带大家撸撸BottomSheetBehavior的源码，能力有限，写的不好的地方，请尽力吐槽。好了，不说废话，直接主题
+2月25日早上，Android官网更新了Support Lirary 23.2版本，其中Design Support Library库新加一个新的东西：Bottom Sheets。然后，第一时间写了篇Teach you how to use Design Support Library: Bottom Sheets，只是简单的讲了它的使用和使用的一些规范。
 
-我们还是先简单的看下用法
+这篇文章我带大家撸撸BottomSheetBehavior的源码，能力有限，写的不好的地方，请尽力吐槽。好了，不说废话，直接主题
+
+我们先简单的看下用法
 ```java
         // The View with the BottomSheetBehavior
         View bottomSheet = coordinatorLayout.findViewById(R.id.bottom_sheet);
@@ -95,6 +96,73 @@ BottomSheetBehavior的定义如下
 不然就会看到"Could not inflate Behavior subclass ..."异常 。
 
 目前为止，我们只是了解了CoordinatorLayout.Behavior相关的东西，还是不知道BottomSheetBehavior实现的原理，别急，这就和你说说。
+
+###view布局
+
+CoordinatorLayout 在 onLayout 的时候会调用BottomSheetBehavior.onLayoutChild方法
+```java
+    @Override
+    public boolean onLayoutChild(CoordinatorLayout parent, V child, int layoutDirection) {
+        // First let the parent lay it out
+        if (mState != STATE_DRAGGING && mState != STATE_SETTLING) {
+            parent.onLayoutChild(child, layoutDirection);
+        }
+        // Offset the bottom sheet
+        mParentHeight = parent.getHeight();
+        mMinOffset = Math.max(0, mParentHeight - child.getHeight());
+        mMaxOffset = mParentHeight - mPeekHeight;
+        if (mState == STATE_EXPANDED) {
+            ViewCompat.offsetTopAndBottom(child, mMinOffset);
+        } else if (mHideable && mState == STATE_HIDDEN) {
+            ViewCompat.offsetTopAndBottom(child, mParentHeight);
+        } else if (mState == STATE_COLLAPSED) {
+            ViewCompat.offsetTopAndBottom(child, mMaxOffset);
+        }
+        if (mViewDragHelper == null) {
+            mViewDragHelper = ViewDragHelper.create(parent, mDragCallback);
+        }
+        mViewRef = new WeakReference<>(child);
+        mNestedScrollingChildRef = new WeakReference<>(findScrollingChild(child));
+        return true;
+    }
+```
+这里主要做了 调用父类 对 View 进行布局,根据 mPeekHeight 和 mState 对 View 位置的进行偏移,偏移到合适的位置,因为mState 默认为STATE_COLLAPSED,偏移量为mParentHeight - mPeekHeight, 调用了findScrollingChild () 寻找第一个 NestedScrollingChild 组件。
+并且初始化了ViewDragHelper 类.负责 View 的滑动。
+
+这里说说BottomSheetBehavior的一个坑，mPeekHeight的默认值是0，或者我们在代码中设置mPeekHeight的高度为0时，自己测试了下，在android5.0的机子底部的BottomSheetBehavior 视图滑动不出来，4.0的又是正常的，你可以亲自试试，体会下......
+我的好基友dim给出了解决方案[Android support 23.2 使用BottomSheetBehavior 的坑](http://www.jianshu.com/p/21bb14e3be94)
+
+在说说一个小技巧，Android官网中有这样一句话：[Enums often require more than twice as much memory as static constants. You should strictly avoid using enums on Android](http://developer.android.com/intl/zh-cn/training/articles/memory.html),就是说枚举比静态常量更加耗费内存，我们应该避免使用，然后我看BottomSheetBehavior源码中mState 是这样定义的：
+```java
+    public static final int STATE_DRAGGING = 1;
+    public static final int STATE_SETTLING = 2;
+    public static final int STATE_EXPANDED = 3;
+    public static final int STATE_COLLAPSED = 4;
+    public static final int STATE_HIDDEN = 5;
+
+    @IntDef({STATE_EXPANDED, STATE_COLLAPSED, STATE_DRAGGING, STATE_SETTLING, STATE_HIDDEN})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface State {}
+    
+    @State
+    private int mState = STATE_COLLAPSED;
+
+```
+弥补了Android不建议使用枚举的缺陷。
+
+###事件拦截
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     
