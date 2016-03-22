@@ -13,7 +13,7 @@
 
 ![](http://ww3.sinaimg.cn/mw690/7ef01fcagw1f25od1so1kg205k07ittz.gif)
 
-作者是实现这个效果的思路是：
+作者实现这个效果的思路是：
 * 1.爱心出现在底部并且水平居中
 * 2.爱心的颜色/类型 随机
 * 3.爱心进入时候有一个缩放的动画
@@ -39,7 +39,10 @@ P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeE
 ```
 程序耦合性有点高，也就是不能自定义，这个也是可以做处理的。总体来说，写的很好。
 
-源码地址：
+小编采访作者为什么写这个？
+
+[程序亦非猿](https://github.com/AlanCheen):"写了快一年了...跟风persicope啊，哈哈 , 效果帅 ,就想实现 ,如此而已"
+
 
 ###Twitter（中文称：推特）是国外的一个社交网络及微博客服务的网站,App点赞效果十分漂亮
 
@@ -48,7 +51,8 @@ P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeE
 ![](https://camo.githubusercontent.com/752e0e35b15b6b684cee90b6bf4309f387caa36f/687474703a2f2f66726f6765726d63732e6769746875622e696f2f696d616765732f32322f627574746f6e5f616e696d2e676966)
 
 看起来也挺复杂的，作者用了很简单的实现方式，一步一步分出来。
-*1.先实现一个画圆的视图[CircleView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/CircleView.java)
+
+1.先实现一个画圆的视图[CircleView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/CircleView.java)
 
 ![](http://frogermcs.github.io/images/22/circle_anim.gif)
 
@@ -56,7 +60,8 @@ P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeE
  ```java
  maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 ```
-*2.接下来就是实现一个画四周点的视图[DotsView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/DotsView.java)
+
+2.接下来就是实现一个画四周点的视图[DotsView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/DotsView.java)
 
 ![](http://frogermcs.github.io/images/22/dots_anim.gif)
 
@@ -65,11 +70,11 @@ P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeE
 int cX = (int) (centerX + currentRadius1 * Math.cos(i * OUTER_DOTS_POSITION_ANGLE * Math.PI / 180));
 int cY = (int) (centerY + currentRadius1 * Math.sin(i * OUTER_DOTS_POSITION_ANGLE * Math.PI / 180)); 
 ```
-*3.星星的缩放动画，这个很简单，作者没写个画星星的类，直接用图片代替了
+3.星星的缩放动画，这个很简单，作者没写个画星星的类，直接用图片代替了
 
 ![](http://frogermcs.github.io/images/22/touch_anim.gif)
 
-*4.最后写了个LikeButtonView继承FrameLayout，把以上三部分组合起来了
+4.最后写了个LikeButtonView继承FrameLayout，把以上三部分组合起来了
 
 ![](http://ww1.sinaimg.cn/mw690/7ef01fcagw1f25r8lk072j20b506m3yr.jpg)
 
@@ -98,9 +103,28 @@ int cY = (int) (centerY + currentRadius1 * Math.sin(i * OUTER_DOTS_POSITION_ANGL
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:src="@drawable/ic_star_rate_off"/>
-
 </merge>
 ```
+因为没有提供向外监听的方法，所以你是无法知道选择的state的，这点可以添加。动画效果还是挺流畅的，但是本人不是很喜欢这种实现方式，因为我觉得一个View也是可以实现这种效果的，不信？我接下来介绍的就是这样做的。
+
+小编采访作者为什么写这个？
+
+[frogermcs](https://github.com/frogermcs):"Hello, Chinese friends,我瞎掰了，呵呵"
+
+###最新Twitter App 版本的点赞效果有了一点变化，还是很漂亮
+
+作者[hanks-zy](https://github.com/hanks-zyh)实现了这种效果[SmallBang](https://github.com/hanks-zyh/SmallBang)
+
+![](https://github.com/hanks-zyh/SmallBang/raw/master/screenshots/heart.gif)
+
+hanks实现这个的思路是：
+* 1.将当前的view变小,画圆半径从小到大,同时颜色渐变 (P1)
+* 2.当半径到达MAX_RADIUS,开始画空心圆,空闲圆半径变大,画笔宽度从MAX_RADIUS变小
+* 3.当空心圆半径达到 MAX_RADIUS - RINGWIDTH (P2), 此时变成圆环,在圆环上生成个DOT_NUMBER个小圆,均匀分布
+* 4.空心圆继续变大,逐渐圆环消失; 同时小圆向外扩散,扩散过程小圆半径减小,颜色渐变;同时下面的view逐渐变大 (P3)
+
+
+
 
 
 
