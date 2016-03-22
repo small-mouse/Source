@@ -3,7 +3,7 @@
 
 #那些年，我们一起点过的赞
 
-![](http://ww3.sinaimg.cn/mw690/7ef01fcagw1f25secsfh7j20zk0m8434.jpg)
+![](http://ww3.sinaimg.cn/mw690/7ef01fcagw1f25shwbp2mj20go0afgmw.jpg)
 
 手在键盘敲很轻，欲说却不知从何吐槽......咳，刚装逼了，现在进入正题。几乎每个社交App都有点赞功能，但是就国内的app来说，你可能记得点赞的内容而压根忽视了点赞的效果。举个例子，就用户最多的微信、QQ来说，点赞也就是个心形和拇指的放大动画（自己去体验下），这里顺便吐槽下网易的点赞，动画做的不错，虽然我手机小小不流畅，可是不能取消赞是怎么回事？ 也许，现在你觉得无非就是个点赞效果，随便做个点击效果就好了，也许产品设计的人也是这样觉得的，也许用户根本就不在乎。我想说的是，友好的交互，会影响用户的体验，做好细节，会让App更成功。
 
@@ -125,7 +125,58 @@ hanks实现这个的思路是：
 * 3.当空心圆半径达到 MAX_RADIUS - RINGWIDTH (P2), 此时变成圆环,在圆环上生成个DOT_NUMBER个小圆,均匀分布
 * 4.空心圆继续变大,逐渐圆环消失; 同时小圆向外扩散,扩散过程小圆半径减小,颜色渐变;同时下面的view逐渐变大 (P3)
 
+从源码上看，就一个view类，SmallBang继承了View,主要是在这个`bang(...)`函数做了位置的初始化和动画的逻辑
+```java
+  public void bang(final View view, float radius, SmallBangListener listener) {
+         ......
+        Rect r = new Rect();
+        view.getGlobalVisibleRect(r);
+        int[] location = new int[2];
+        getLocationOnScreen(location);
+        r.offset(-location[0], -location[1]);
+        r.inset(-mExpandInset[0], -mExpandInset[1]);
 
+        centerX = r.left + r.width() / 2;
+        centerY = r.top + r.height() / 2;
+
+        if (radius != -1) {
+            initRadius(radius);
+        } else {
+            initRadius(Math.max(r.width(),r.height()));
+        }
+        view.setScaleX(0.1f);
+        view.setScaleY(0.1f);
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f).setDuration((long) (ANIMATE_DURATION * 0.5f));
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float animatedFraction = animation.getAnimatedFraction();
+                view.setScaleX(0.1f + animatedFraction * 0.9f);
+                view.setScaleY(0.1f + animatedFraction * 0.9f);
+            }
+        });
+        animator.setInterpolator(new OvershootInterpolator(2));
+        animator.setStartDelay((long) (ANIMATE_DURATION * P3));
+        animator.start();
+        bang();
+    }
+```
+动画效果还是挺流畅，效果也挺棒。这里说说这个库的不足的地方。
+```java
+    public static SmallBang attach2Window(Activity activity) {
+        ViewGroup rootView = (ViewGroup) activity.findViewById(Window.ID_ANDROID_CONTENT);
+        SmallBang smallBang = new SmallBang(activity);
+        rootView.addView(smallBang, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return smallBang;
+    }
+```
+传入参数是activity，会导致如果是dialog使用，就必须改代码，这里写死了，可以优化。
+因为此效果多半在列表中使用，所以测试中效果发生的位置会有偏差，这点也需优化。
+
+小编采访作者为什么写这个？
+
+xxx
 
 
 
