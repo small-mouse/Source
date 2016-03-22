@@ -5,13 +5,15 @@
 
 手在键盘敲很轻，欲说却不知从何吐槽......咳，刚装逼了，现在进入正题。几乎每个社交App都有点赞功能，但是就国内的app来说，你可能记得点赞的内容而压根忽视了点赞的效果。举个例子，就用户最多的微信、QQ来说，点赞也就是个心形和拇指的放大动画（自己去体验下），这里顺便吐槽下网易的点赞，动画做的不错，虽然我手机小小不流畅，可是不能取消赞是怎么回事？ 也许，现在你觉得无非就是个点赞效果，随便做个点击效果就好了，也许产品设计的人也是这样觉得的，也许用户根本就不在乎。我想说的是，友好的交互，会影响用户的体验，做好细节，会让App更成功。
 
-介绍下我认为点赞做的比较好的App及如何实现。
+介绍下我认为点赞做的比较好的App及简单介绍如何实现。
 
-Periscope一款用户可以向其他人直播视音频的App,点赞效果让人眼前一亮。大概在一年前，程序亦非猿就写了[一步一步教你实现Periscope点赞效果](http://www.jianshu.com/p/03fdcfd3ae9c)，我也在个人项目中用了，感觉良好。
+###Periscope一款用户可以向其他人直播视音频的App,点赞效果让人眼前一亮。
+
+大概在一年前，程序亦非猿就写了[一步一步教你实现Periscope点赞效果](http://www.jianshu.com/p/03fdcfd3ae9c)，我也在个人项目中用了，感觉良好。
 
 ![](http://ww3.sinaimg.cn/mw690/7ef01fcagw1f25od1so1kg205k07ittz.gif)
 
-非猿是这样实现这个效果：
+作者是实现这个效果的思路是：
 * 1.爱心出现在底部并且水平居中
 * 2.爱心的颜色/类型 随机
 * 3.爱心进入时候有一个缩放的动画
@@ -36,6 +38,75 @@ P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeE
     }
 ```
 程序耦合性有点高，也就是不能自定义，这个也是可以做处理的。总体来说，写的很好。
+
+源码地址：
+
+###Twitter（中文称：推特）是国外的一个社交网络及微博客服务的网站,App点赞效果十分漂亮
+
+我最早是看到[frogermcs/LikeAnimation](https://github.com/frogermcs/LikeAnimation)实现了，效果如下：
+
+![](https://camo.githubusercontent.com/752e0e35b15b6b684cee90b6bf4309f387caa36f/687474703a2f2f66726f6765726d63732e6769746875622e696f2f696d616765732f32322f627574746f6e5f616e696d2e676966)
+
+看起来也挺复杂的，作者用了很简单的实现方式，一步一步分出来。
+*1.先实现一个画圆的视图[CircleView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/CircleView.java)
+
+![](http://frogermcs.github.io/images/22/circle_anim.gif)
+
+看图知道主要在`ondraw()`函数画两个不断扩大圆就可以，内部圆提供的画笔path 设置：
+ ```java
+ maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+```
+*2.接下来就是实现一个画四周点的视图[DotsView](https://github.com/frogermcs/LikeAnimation/blob/master/app/src/main/java/frogermcs/io/likeanimation/DotsView.java)
+
+![](http://frogermcs.github.io/images/22/dots_anim.gif)
+
+其实还是画圆，我们需要确定各个圆的圆心
+```java
+int cX = (int) (centerX + currentRadius1 * Math.cos(i * OUTER_DOTS_POSITION_ANGLE * Math.PI / 180));
+int cY = (int) (centerY + currentRadius1 * Math.sin(i * OUTER_DOTS_POSITION_ANGLE * Math.PI / 180)); 
+```
+*3.星星的缩放动画，这个很简单，作者没写个画星星的类，直接用图片代替了
+
+![](http://frogermcs.github.io/images/22/touch_anim.gif)
+
+*4.最后写了个LikeButtonView继承FrameLayout，把以上三部分组合起来了
+
+![](http://ww1.sinaimg.cn/mw690/7ef01fcagw1f25r8lk072j20b506m3yr.jpg)
+
+看布局源码就知道了
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent">
+
+    <frogermcs.io.likeanimation.DotsView
+        android:id="@+id/vDotsView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"/>
+
+    <frogermcs.io.likeanimation.CircleView
+        android:id="@+id/vCircle"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"/>
+
+    <ImageView
+        android:id="@+id/ivStar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_star_rate_off"/>
+
+</merge>
+```
+
+
+
+
+
+
 
 
 
