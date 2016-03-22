@@ -18,8 +18,9 @@ Periscope一款用户可以向其他人直播视音频的App,点赞效果让人�
 * 4.缩放完毕后,开始变速向上移动,并且伴随alpha渐变效果
 * 5.爱心移动的轨迹光滑,是个曲线
 
-其实，难点就是曲线运动，
-
+其实，难点就是曲线运动，作者用了三次方贝塞尔曲线的公式：
+![](http://e.hiphotos.baidu.com/baike/s%3D421/sign=9a6521eab8014a90853e47bf98763971/f603918fa0ec08fad54f8dff58ee3d6d55fbda1f.jpg)
+P0,是爱心的起点,P3是终点,P1,P2是途径的两个点。在自定义TypeEvaluator，实现了动画曲线效果。具体你可以去看作者原文，因为他写了，我就不啰嗦了。我讲讲不够优美的地方，爱心出来移动太分散，源码中，作者提供P1,P2点时候，处理的很随意，所以这里是可以做优化的。
 ```java
    /**
      * 获取中间的两个 点
@@ -27,13 +28,16 @@ Periscope一款用户可以向其他人直播视音频的App,点赞效果让人�
      * @param scale
      */
     private PointF getPointF(int scale) {
-        PointF pointF = new PointF();
+        PointF pointF = new PointF()
         pointF.x = random.nextInt((mWidth - 100));//减去100 是为了控制 x轴活动范围,看效果 随意~~
         //再Y轴上 为了确保第二个点 在第一个点之上,我把Y分成了上下两半 这样动画效果好一些  也可以用其他方法
         pointF.y = random.nextInt((mHeight - 100)) / scale;
         return pointF;
     }
 ```
+程序耦合性有点高，也就是不能自定义，这个也是可以做处理的。总体来说，写的很好。
+
+
 
 
 
